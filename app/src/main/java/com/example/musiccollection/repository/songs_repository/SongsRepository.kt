@@ -2,6 +2,7 @@ package com.example.musiccollection.repository.songs_repository
 
 import android.content.Context
 import android.os.AsyncTask
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
@@ -24,30 +25,33 @@ class SongsRepository(context: Context) {
                 loadSongs()
             }
         }
-    private val songsDataFromAPI: MutableLiveData<List<Song>> = MutableLiveData()
-    private val requestLocalData: MutableLiveData<Boolean> = MutableLiveData()
-    val networkError: MutableLiveData<Int> = MutableLiveData()
     private val songDao = DatabaseInteractor.getInstance(context)?.getDao()
-    private val songsDataFromLocal = Transformations.switchMap(requestLocalData, {
-        songDao?.getSongs()
-    })
-    val songsData = MediatorLiveData<List<Song>>()
 
-    init {
-        songsData.addSource(songsDataFromAPI, {
-            songsData.value = it
-        })
-        songsData.addSource(songsDataFromLocal, {
-            songsData.value = it
-        })
+    val requestForArtists = MutableLiveData<Boolean>()
+    val requestForAlbums = MutableLiveData<Boolean>()
+    val requestSongsOnAlbum = MutableLiveData<String>()
+    val requestSongsByArtist = MutableLiveData<String>()
+    val networkError: MutableLiveData<Int> = MutableLiveData()
+
+    val albums = Transformations.switchMap(requestForAlbums) {
+        songDao?.getAlbums()
     }
+    val artists = Transformations.switchMap(requestForArtists) {
+        songDao?.getArtist()
+    }
+    val songsByArtist = Transformations.switchMap(requestSongsByArtist) {
+        songDao?.getSongsByArtist(it)
+    }
+    val songsOnAlbum = Transformations.switchMap(requestSongsOnAlbum) {
+       songDao?.getSongsOnAlbum(it)
+    }
+
 
     fun loadSongs() {
         if (networkAvailable) {
             val call = APIservice.getSongsAPI()?.getSongs()
             call?.enqueue(object : retrofit2.Callback<Data> {
                 override fun onFailure(call: Call<Data>, t: Throwable) {
-                    requestLocalData.postValue(true)
                     networkError.postValue(NETWORK_ERROR)
                     t.printStackTrace()
                 }
@@ -55,11 +59,10 @@ class SongsRepository(context: Context) {
                 override fun onResponse(call: Call<Data>, response: Response<Data>) {
 
                     if (response.isSuccessful) {
-                        songsDataFromAPI.postValue(response.body()?.data)
                         ClearSongs(songDao).execute()
                         InsertSongs(songDao).execute(response.body()?.data)
+
                     } else {
-                        requestLocalData.postValue(true)
                         networkError.postValue(SERVER_ERROR)
                     }
 
@@ -67,7 +70,6 @@ class SongsRepository(context: Context) {
 
             })
         } else {
-            requestLocalData.postValue(true)
             networkError.postValue(NETWORK_NOT_AVAILABLE)
         }
 

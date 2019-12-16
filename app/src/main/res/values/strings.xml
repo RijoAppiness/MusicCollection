@@ -1,6 +1,19 @@
 <resources>
     <string name="app_name">Music Collection</string>
-    <string name="network_error">Server Error</string>
+    <string name="network_error">Network Error</string>
     <string name="server_error">Server Error</string>
     <string name="network_not_avalable">Network not available</string>
+
+    <string-array name="group_by">
+        <item>Album</item>
+        <item>Artist</item>
+    </string-array>
+
+    <string-array name="span">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
 </resources>

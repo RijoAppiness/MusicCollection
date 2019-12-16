@@ -7,7 +7,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class APIservice{
     companion object {
-        //var retrofit:Retrofit? = null
         private var instance:SongsAPI?=null
         fun getSongsAPI():SongsAPI?{
             if(instance==null){
